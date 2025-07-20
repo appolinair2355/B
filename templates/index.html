@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeleFeed Control Panel</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        .control-panel {
+            padding: 40px;
+            border-right: 1px solid #eee;
+        }
+
+        .control-panel:last-child {
+            border-right: none;
+        }
+
+        .control-panel h2 {
+            color: #2c3e50;
+            margin: 0 0 20px 0;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status.running {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.stopped {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+            color: white;
+        }
+
+        .btn-stop:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-config {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn-config:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+        }
+
+        .redirections {
+            background: #f8f9fa;
+            padding: 30px;
+            margin-top: 0;
+        }
+
+        .redirections h3 {
+            color: #2c3e50;
+            margin: 0 0 20px 0;
+            font-size: 1.5em;
+        }
+
+        .redirection-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .redirection-item h4 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+        }
+
+        .redirection-item p {
+            margin: 5px 0;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #28a745;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.info {
+            background: #17a2b8;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        .icon {
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 TeleFeed Control Panel</h1>
+            <p>Panneau de contrôle pour TeleFeed et Prédictions Automatiques</p>
+        </div>
+
+        <div class="controls">
+            <!-- TeleFeed Control -->
+            <div class="control-panel">
+                <h2><span class="icon">📱</span> Bot TeleFeed</h2>
+
+                <div class="status {{ 'running' if telefeed_running else 'stopped' }}">
+                    <div class="status-indicator"></div>
+                    {% if telefeed_running %}
+                        Actif (PID: {{ telefeed_pid }})
+                    {% else %}
+                        Arrêté
+                    {% endif %}
+                </div>
+
+                <div>
+                    <button class="btn btn-start" onclick="startTeleFeed()">
+                        <span class="icon">▶️</span> Démarrer TeleFeed
+                    </button>
+                    <button class="btn btn-stop" onclick="stopTeleFeed()">
+                        <span class="icon">⏹️</span> Arrêter TeleFeed
+                    </button>
+                </div>
+
+                <div class="config-section">
+                    <h4>🔧 Configuration Redirection Bot</h4>
+                    <div class="input-group">
+                        <label for="source_channel">Canal Source (ID):</label>
+                        <input type="text" id="source_channel" placeholder="1002370795564" value="1002370795564">
+                    </div>
+                    <div class="input-group">
+                        <label for="bot_destination">Bot Destination (ID):</label>
+                        <input type="text" id="bot_destination" placeholder="@votre_bot_id" value="@TeleFeedBot">
+                    </div>
+                    <button class="btn btn-config" onclick="configureBotRedirect()">
+                        <span class="icon">🔗</span> Configurer Redirection Auto vers Bot
+                    </button>
+                </div>
+            </div>
+
+            <!-- Predictions Control -->
+            <div class="control-panel">
+                <h2><span class="icon">🔮</span> Prédictions Automatiques</h2>
+
+                <div class="status {{ 'running' if predictions_running else 'stopped' }}" id="predictions-status">
+                    <div class="status-indicator"></div>
+                    <span id="predictions-status-text">
+                    {% if predictions_running %}
+                        Actif (PID: {{ predictions_pid }})
+                    {% else %}
+                        Arrêté
+                    {% endif %}
+                    </span>
+                </div>
+
+                <div>
+                    <button class="btn btn-start" onclick="startPredictions()">
+                        <span class="icon">▶️</span> Démarrer Prédictions
+                    </button>
+                    <button class="btn btn-stop" onclick="stopPredictions()">
+                        <span class="icon">⏹️</span> Arrêter Prédictions
+                    </button>
+                </div>
+
+                <div class="config-section">
+                    <h4>⚙️ Configuration Prédictions</h4>
+                    <p>Les prédictions automatiques analyseront les données et généreront des prédictions en temps réel pour vos channels configurés.</p>
+                    <button class="btn btn-config" onclick="configurePredictions()">
+                        <span class="icon">⚙️</span> Configurer Prédictions
+                    </button>
+                    <div>
+                        Total prédictions: <span id="total-predictions">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Redirections Status -->
+        <div class="redirections">
+            <h3>📊 Redirections Actives</h3>
+            {% if redirections %}
+                {% for user_id, user_redirections in redirections.items() %}
+                    {% for name, redirect in user_redirections.items() %}
+                        {% if redirect.active %}
+                        <div class="redirection-item">
+                            <h4>{{ redirect.channel_name or name }}</h4>
+                            <p><strong>Source:</strong> {{ redirect.source_id }} → <strong>Destination:</strong> {{ redirect.destination_id }}</p>
+                            <p><strong>Téléphone:</strong> {{ redirect.phone }} | <strong>Créé:</strong> {{ redirect.replaced_at }}</p>
+                            {% if redirect.get('auto_redirect_to_bot') %}
+                                <p><span style="color: #007bff; font-weight: bold;">🤖 Redirection automatique vers bot activée</span></p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% else %}
+                <p>Aucune redirection configurée</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        function startTeleFeed() {
+            fetch('/start_telefeed', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    showNotification(data.message, data.status);
+                    if (data.status === 'success') {
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                })
+                .catch(error => showNotification('Erreur de connexion', 'error'));
+        }
+
+        function stopTeleFeed() {
+            fetch('/stop_telefeed', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    showNotification(data.message, data.status);
+                    if (data.status === 'success') {
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                })
+                .catch(error => showNotification('Erreur de connexion', 'error'));
+        }
+
+        function configureBotRedirect() {
+            const sourceChannel = document.getElementById('source_channel').value;
+            const botDestination = document.getElementById('bot_destination').value;
+
+            if (!sourceChannel || !botDestination) {
+                showNotification('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+
+            fetch('/configure_bot_redirect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    source_id: sourceChannel,
+                    bot_id: botDestination
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showNotification(data.message, data.status);
+                    if (data.status === 'success') {
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                })
+                .catch(error => showNotification('Erreur de configuration', 'error'));
+        }
+
+        function configurePredictions() {
+            showNotification('Configuration des prédictions en cours...', 'info');
+            // Logique de configuration des prédictions
+        }
+
+        function startPredictions() {
+            fetch('/start_predictions', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(data.message, data.status);
+                updatePredictionsStatus();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Erreur de connexion', 'error');
+            });
+        }
+
+        function stopPredictions() {
+            fetch('/stop_predictions', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                showNotification(data.message, data.status);
+                updatePredictionsStatus();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Erreur de connexion', 'error');
+            });
+        }
+
+        function updatePredictionsStatus() {
+            fetch('/predictions_status')
+            .then(response => response.json())
+            .then(data => {
+                const statusDiv = document.getElementById('predictions-status');
+                const statusText = document.getElementById('predictions-status-text');
+                const totalPredictions = document.getElementById('total-predictions');
+
+                if (data.active) {
+                    statusDiv.className = 'status running';
+                    statusText.textContent = 'Actif - Analyse automatique des messages';
+                } else {
+                    statusDiv.className = 'status stopped';
+                    statusText.textContent = 'Arrêté';
+                }
+
+                totalPredictions.textContent = data.total_predictions || 0;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const statusText = document.getElementById('predictions-status-text');
+                statusText.textContent = 'Erreur de connexion';
+            });
+        }
+
+        // Prédictions
+        const startPredictionsBtn = document.getElementById('startPredictionsBtn');
+        const stopPredictionsBtn = document.getElementById('stopPredictionsBtn');
+        const checkPredictionsBtn = document.getElementById('checkPredictionsBtn');
+        const predictionStatusText = document.getElementById('predictionStatusText');
+
+        // Vérifier le statut initial
+        function checkPredictionStatus() {
+            fetch('/prediction_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.enabled) {
+                        predictionStatusText.textContent = '🔮 Prédictions Automatiques ACTIVES';
+                        predictionStatusText.className = 'status-active';
+                    } else {
+                        predictionStatusText.textContent = '⏸️ Prédictions Désactivées';
+                        predictionStatusText.className = 'status-inactive';
+                    }
+                })
+                .catch(error => {
+                    predictionStatusText.textContent = 'Erreur de vérification';
+                    console.error('Error:', error);
+                });
+        }
+
+        // Vérifier au chargement
+        checkPredictionStatus();
+
+        startPredictionsBtn.addEventListener('click', function() {
+            fetch('/start_predictions', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        predictionStatusText.textContent = '🔮 Prédictions Automatiques ACTIVES';
+                        predictionStatusText.className = 'status-active';
+                        showNotification(data.message, 'success');
+                    } else {
+                        showNotification(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Erreur lors de l\'activation des prédictions', 'error');
+                    console.error('Error:', error);
+                });
+        });
+
+        stopPredictionsBtn.addEventListener('click', function() {
+            fetch('/stop_predictions', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        predictionStatusText.textContent = '⏸️ Prédictions Désactivées';
+                        predictionStatusText.className = 'status-inactive';
+                        showNotification(data.message, 'success');
+                    } else {
+                        showNotification(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Erreur lors de l\'arrêt des prédictions', 'error');
+                    console.error('Error:', error);
+                });
+        });
+
+        checkPredictionsBtn.addEventListener('click', function() {
+            checkPredictionStatus();
+            showNotification('Status des prédictions vérifié', 'info');
+        });
+
+        // Auto-refresh status every 30 seconds
+        setInterval(() => {
+            fetch('/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update status indicators without full reload
+                    console.log('Status updated:', data);
+                })
+                .catch(error => console.log('Status check failed'));
+        }, 30000);
+        setInterval(updatePredictionsStatus, 15000);
+
+        // Mise à jour initiale
+        // updateStatus();
+        updatePredictionsStatus();
+    </script>
+</body>
+</html>

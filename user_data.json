@@ -1,0 +1,78 @@
+{
+  "licenses": {
+    "5622847726": {
+      "license": "56228477265622820250708ARIOP0016",
+      "validated_at": "2025-07-08T00:17:00.905874",
+      "active": true
+    }
+  },
+  "connections": {
+    "1190237801": [
+      {
+        "phone": "+22967924076",
+        "connected_at": "2025-07-08T04:29:58.990776",
+        "active": true,
+        "replaced_at": "08/07/2025 04:29:58"
+      },
+      {
+        "phone": "+22995501564",
+        "connected_at": "2025-07-19T09:39:37.688455",
+        "active": true,
+        "replaced_at": "19/07/2025 09:39:37"
+      }
+    ]
+  },
+  "redirections": {
+    "1190237801": {
+      "vers_stats1": {
+        "phone": "22995501564",
+        "name": "vers_stats1",
+        "channel_name": "\ud83d\udcfa vers_stats1",
+        "source_id": "1001194981760",
+        "destination_id": "1002646551216",
+        "created_at": "2025-07-19T05:56:47.117464",
+        "replaced_at": "19/07/2025 05:56:47",
+        "active": true,
+        "replacement_info": " (mis \u00e0 jour: vers_stats1)"
+      },
+      "vers_stats2": {
+        "phone": "22995501564",
+        "name": "vers_stats2",
+        "channel_name": "\ud83d\udcfa vers_stats2",
+        "source_id": "-1001194981760",
+        "destination_id": "-1002646551216",
+        "created_at": "2025-07-19T04:30:43.333777",
+        "replaced_at": "19/07/2025 04:30:43",
+        "active": true,
+        "replacement_info": " (mis \u00e0 jour: vers_stats2)"
+      },
+      "vers_stats3": {
+        "phone": "22995501564",
+        "name": "vers_stats3",
+        "channel_name": "\ud83d\udcfa vers_stats3",
+        "source_id": "-1002572817786",
+        "destination_id": "-1002646551216",
+        "created_at": "2025-07-19T04:05:30.000000",
+        "replaced_at": "19/07/2025 04:05:30",
+        "active": true,
+        "replacement_info": ""
+      },
+      "vers_stats": {
+        "phone": "22995501564",
+        "name": "vers_stats",
+        "channel_name": "\ud83d\udcfa vers_stats",
+        "source_id": "-1001002370795564",
+        "destination_id": "-1001002682552255",
+        "created_at": "2025-07-19T09:42:29.483019",
+        "replaced_at": "19/07/2025 09:42:29",
+        "active": true,
+        "replacement_info": " (mis \u00e0 jour: vers_stats)"
+      }
+    }
+  },
+  "transformations": {},
+  "whitelists": {},
+  "blacklists": {},
+  "chats": {},
+  "pending_redirections": {}
+}

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: telefeed-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: API_ID
+        sync: false
+      - key: API_HASH
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_ID
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: .
+    scaling:
+      minInstances: 1
+      maxInstances: 1

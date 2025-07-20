@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TeleFeed Bot - Always On</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 50px;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .always-on {
+            font-size: 48px;
+            color: #4CAF50;
+            margin: 20px 0;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .info {
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .status {
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+    <script>
+        setInterval(function() {
+            fetch('/ping')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('lastPing').textContent = new Date().toLocaleTimeString();
+                    document.getElementById('status').textContent = 'ACTIF';
+                    document.getElementById('status').style.color = '#4CAF50';
+                })
+                .catch(error => {
+                    document.getElementById('status').textContent = 'RECONNEXION...';
+                    document.getElementById('status').style.color = '#FFA500';
+                });
+        }, 30000);
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="always-on">🔄 ALWAYS ON</div>
+        <h1>🤖 TeleFeed Bot</h1>
+        
+        <div class="info">
+            <h3>📡 Statut Replit</h3>
+            <p class="status" id="status">ACTIF</p>
+            <p>Hébergement permanent sur Replit</p>
+            <p>Dernière activité: <span id="lastPing">En cours...</span></p>
+        </div>
+        
+        <div class="info">
+            <h3>🚀 Configuration</h3>
+            <p>Port: 8080</p>
+            <p>URL: https://workspace.felicitationsbi.repl.co</p>
+            <p>Ping: Toutes les 2 minutes</p>
+        </div>
+        
+        <div class="info">
+            <h3>✅ Fonctionnalités</h3>
+            <ul style="text-align: left;">
+                <li>Hébergement gratuit 24/7</li>
+                <li>Réveil automatique</li>
+                <li>Monitoring continu</li>
+                <li>Bot Telegram actif</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+        
