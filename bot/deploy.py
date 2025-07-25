@@ -1,4 +1,3 @@
-
 import logging
 import os
 import zipfile
@@ -15,14 +14,14 @@ async def handle_deploy(event, client):
     """
     try:
         user_id = event.sender_id
-        
 
-        
+
+
         await event.respond("📦 **Création du package de déploiement...**\n\n⏳ Préparation des fichiers en cours...")
-        
+
         # Create deployment ZIP
         zip_path = await create_deployment_zip()
-        
+
         if zip_path and os.path.exists(zip_path):
             # Send the ZIP file
             await client.send_file(
@@ -48,14 +47,14 @@ async def handle_deploy(event, client):
                 attributes=[],
                 force_document=True
             )
-            
+
             # Clean up
             os.remove(zip_path)
             logger.info(f"Deployment package sent to user {user_id}")
-            
+
         else:
             await event.respond("❌ **Erreur lors de la création du package**\n\nVeuillez réessayer plus tard.")
-            
+
     except Exception as e:
         logger.error(f"Error in deploy handling: {e}")
         await event.respond("❌ Erreur lors du traitement du déploiement. Veuillez réessayer.")
@@ -66,7 +65,7 @@ async def create_deployment_zip():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         zip_filename = f"TeleFeed_deployment_{timestamp}.zip"
         zip_path = os.path.join(os.getcwd(), zip_filename)
-        
+
         # Individual files to include
         files_to_include = [
             'main.py',
@@ -86,40 +85,40 @@ async def create_deployment_zip():
             'KEEP_ALIVE_GUIDE.md',
             'REPLIT_ALWAYS_ON_GUIDE.md'
         ]
-        
+
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             # Add individual files
             for item in files_to_include:
                 if os.path.exists(item):
                     zipf.write(item, os.path.basename(item))
                     logger.info(f"Added file to ZIP: {item}")
-            
+
             # Add entire bot directory with structure
             bot_dir = 'bot'
             if os.path.exists(bot_dir):
                 for root, dirs, files in os.walk(bot_dir):
                     # Skip __pycache__ directories
                     dirs[:] = [d for d in dirs if d != '__pycache__']
-                    
+
                     for file in files:
                         if not file.endswith('.session') and not file.endswith('.pyc'):
                             file_path = os.path.join(root, file)
                             zipf.write(file_path, file_path)
                             logger.info(f"Added bot file to ZIP: {file_path}")
-            
+
             # Add entire config directory with structure
             config_dir = 'config'
             if os.path.exists(config_dir):
                 for root, dirs, files in os.walk(config_dir):
                     # Skip __pycache__ directories
                     dirs[:] = [d for d in dirs if d != '__pycache__']
-                    
+
                     for file in files:
                         if not file.endswith('.pyc'):
                             file_path = os.path.join(root, file)
                             zipf.write(file_path, file_path)
                             logger.info(f"Added config file to ZIP: {file_path}")
-            
+
             # Add templates directory
             templates_dir = 'templates'
             if os.path.exists(templates_dir):
@@ -128,12 +127,12 @@ async def create_deployment_zip():
                         file_path = os.path.join(root, file)
                         zipf.write(file_path, file_path)
                         logger.info(f"Added template file to ZIP: {file_path}")
-            
+
             # Add logs directory (create empty if doesn't exist)
             logs_dir = 'logs'
             if not os.path.exists(logs_dir):
                 os.makedirs(logs_dir)
-            
+
             if os.path.exists(logs_dir):
                 for root, dirs, files in os.walk(logs_dir):
                     # Add directory even if empty
@@ -143,7 +142,7 @@ async def create_deployment_zip():
                             file_path = os.path.join(root, file)
                             zipf.write(file_path, file_path)
                             logger.info(f"Added logs file to ZIP: {file_path}")
-            
+
             # Add deployment packages for reference
             deployment_dirs = ['deployment_files', 'final_deployment']
             for dep_dir in deployment_dirs:
@@ -151,14 +150,14 @@ async def create_deployment_zip():
                     for root, dirs, files in os.walk(dep_dir):
                         # Skip __pycache__ directories
                         dirs[:] = [d for d in dirs if d != '__pycache__']
-                        
+
                         for file in files:
                             if not file.endswith('.session') and not file.endswith('.pyc'):
                                 file_path = os.path.join(root, file)
                                 # Store with original path structure
                                 zipf.write(file_path, file_path)
                                 logger.info(f"Added deployment file to ZIP: {file_path}")
-            
+
             # Create deployment instructions
             instructions = f"""
 # 🚀 PACKAGE DE DÉPLOIEMENT TELEFEED COMPLET
@@ -210,7 +209,7 @@ async def create_deployment_zip():
 
 Créé le : {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
-            
+
             zipf.writestr("DEPLOYMENT_INSTRUCTIONS.md", instructions)
             if os.path.exists(config_dir):
                 for file in os.listdir(config_dir):
@@ -218,7 +217,7 @@ Créé le : {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
                     if os.path.isfile(file_path) and '__pycache__' not in file:
                         zipf.write(file_path, file)
                         logger.info(f"Added file to ZIP: {file}")
-            
+
             # Create deployment instructions
             instructions = """
 # TeleFeed Bot - Instructions de Déploiement
@@ -255,9 +254,9 @@ Créé le : {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 Pour toute assistance, contactez le support TeleFeed.
             """
-            
+
             zipf.writestr("DEPLOYMENT_INSTRUCTIONS.md", instructions)
-            
+
             # Create .env.example if it doesn't exist
             env_example = """
 # TeleFeed Bot Configuration
@@ -267,13 +266,74 @@ BOT_TOKEN=your_bot_token_here
 DATABASE_URL=postgresql://user:password@host:port/database
 ADMIN_ID=your_admin_id_here
             """
-            
+
             if not os.path.exists('.env.example'):
                 zipf.writestr(".env.example", env_example)
-        
+
         logger.info(f"Deployment ZIP created: {zip_path}")
+
+        # Get file size
+        file_size = os.path.getsize(zip_path)
+        file_size = f"{file_size / (1024 * 1024):.2f} MB"
+
+        success_message = f"""
+📦 **Pack de déploiement TeleFeed créé avec succès !**
+
+📁 **Fichier :** `{zip_filename}`
+📊 **Taille :** {file_size}
+📅 **Créé le :** {datetime.now().strftime('%d/%m/%Y à %H:%M:%S')}
+
+**📋 Contenu complet du pack :**
+
+🔧 **Code source :**
+✅ Dossier bot/ complet (tous les modules)
+✅ Dossier config/ avec paramètres
+✅ Dossier templates/ pour interface web
+✅ Dossier logs/ pour journalisation
+
+📄 **Fichiers principaux :**
+✅ main.py - Point d'entrée principal
+✅ requirements.txt - Dépendances Python
+✅ http_server.py - Serveur web intégré
+✅ keep_alive.py - Système de maintien d'activité
+✅ web_interface.py - Interface web de contrôle
+✅ telegram_sessions.json - Gestion des sessions
+
+⚙️ **Configuration :**
+✅ .env.example - Template de configuration
+✅ Procfile - Configuration Heroku/Render
+✅ runtime.txt - Version Python
+✅ render.yaml - Configuration Render
+✅ .replit - Configuration Replit
+
+📚 **Documentation :**
+✅ DEPLOYMENT_GUIDE.md - Guide de déploiement général
+✅ KEEP_ALIVE_GUIDE.md - Configuration keep-alive
+✅ RENDER_DEPLOYMENT_SOLUTION.md - Guide Render
+✅ GUIDE_HEBERGEMENT_REPLIT.md - Guide Replit
+✅ DEPLOYMENT_INFO.md - Informations du pack
+
+**🚀 Plateformes supportées :**
+• 🎯 **Replit** (recommandé - hébergement gratuit)
+• ⚡ **Render** (déploiement automatique) 
+• 🔥 **Heroku** (compatible)
+• 🌐 **Tout service Python** (VPS, cloud, etc.)
+
+**📖 Instructions de déploiement :**
+1. 📥 Téléchargez le fichier ZIP
+2. 📂 Extrayez sur votre plateforme d'hébergement
+3. ⚙️ Configurez les variables d'environnement (.env)
+4. 📦 Installez les dépendances : `pip install -r requirements.txt`
+5. 🚀 Lancez le bot : `python main.py`
+
+**🎯 Le pack contient TOUT le nécessaire pour un déploiement réussi !**
+**🆓 Hébergement gratuit disponible sur Replit**
+**⚡ Configuration automatique du keep-alive**
+**🔄 Restauration automatique des sessions**
+        """
+
         return zip_path
-        
+
     except Exception as e:
         logger.error(f"Error creating deployment ZIP: {e}")
         return None

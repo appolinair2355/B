@@ -262,14 +262,22 @@ async def handle_redirection_format(event, client, source_id, destination_id):
         channel_name = await get_channel_name(client, phone_number, name)
         
         # Fix channel ID format if needed
-        if source_id.isdigit() and len(source_id) > 10:
-            source_id = f"-100{source_id}"
-        elif source_id.isdigit():
+        if source_id.isdigit() and len(source_id) >= 10:
+            # For IDs like 1001194981760, convert to -1001194981760
+            if source_id.startswith('100'):
+                source_id = f"-{source_id}"
+            else:
+                source_id = f"-100{source_id}"
+        elif source_id.isdigit() and not source_id.startswith('-'):
             source_id = f"-{source_id}"
             
-        if destination_id.isdigit() and len(destination_id) > 10:
-            destination_id = f"-100{destination_id}"
-        elif destination_id.isdigit():
+        if destination_id.isdigit() and len(destination_id) >= 10:
+            # For IDs like 1002646551216, convert to -1002646551216
+            if destination_id.startswith('100'):
+                destination_id = f"-{destination_id}"
+            else:
+                destination_id = f"-100{destination_id}"
+        elif destination_id.isdigit() and not destination_id.startswith('-'):
             destination_id = f"-{destination_id}"
         
         # Store complete redirection with channel IDs

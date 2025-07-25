@@ -16,7 +16,7 @@ async def handle_connect(event, client):
     """
     try:
         message_text = event.text.strip()
-        
+
         # Check if command is used alone
         if message_text == "/connect":
             usage_message = """
@@ -34,30 +34,30 @@ async def handle_connect(event, client):
             """
             await event.respond(usage_message)
             return
-        
+
         # Extract phone number from command
         parts = message_text.split()
         if len(parts) != 2:
             await event.respond("❌ Format incorrect. Utilisez : `/connect NUMERO`")
             return
-        
+
         phone_number = parts[1]
-        
+
         # Validate phone number format
         if not re.match(r'^\d{10,15}$', phone_number):
             await event.respond("❌ Numéro de téléphone invalide. Utilisez le format : indicatif + numéro (ex: 229900112233)")
             return
-        
+
         user_id = event.sender_id
-        
+
         # Format phone number for Telegram API
         formatted_phone = f"+{phone_number}"
-        
+
         await event.respond("🔄 **Initiation de la connexion...**\n\nTentative de connexion en cours...")
-        
+
         # Create a new client session for this phone number
         session_name = f"session_{user_id}_{phone_number}"
-        
+
         try:
             # Create new client for the phone number
             new_client = TelegramClient(
@@ -65,12 +65,12 @@ async def handle_connect(event, client):
                 int(os.getenv("API_ID")),
                 os.getenv("API_HASH")
             )
-            
+
             await new_client.connect()
-            
+
             # Send code request
             result = await new_client.send_code_request(formatted_phone)
-            
+
             # Store the connection session
             active_connections[user_id] = {
                 'client': new_client,
@@ -78,7 +78,7 @@ async def handle_connect(event, client):
                 'phone_code_hash': result.phone_code_hash,
                 'session_name': session_name
             }
-            
+
             success_message = f"""
 ✅ **Code de vérification envoyé !**
 
@@ -93,22 +93,22 @@ async def handle_connect(event, client):
 
 ✍️ **Prochaine étape :** Envoyez le code avec 'aa' devant
             """
-            
+
             await event.respond(success_message)
             logger.info(f"Verification code sent for user {user_id} with phone {formatted_phone}")
-            
+
         except PhoneNumberInvalidError:
             await event.respond("❌ **Numéro de téléphone invalide**\n\nVeuillez vérifier le format du numéro et réessayer.")
             logger.error(f"Invalid phone number: {formatted_phone}")
-            
+
         except FloodWaitError as e:
             await event.respond(f"❌ **Limite de tentatives atteinte**\n\nVeuillez attendre {e.seconds} secondes avant de réessayer.")
             logger.error(f"Flood wait error: {e.seconds} seconds")
-            
+
         except Exception as e:
             await event.respond("❌ **Erreur lors de l'envoi du code**\n\nVeuillez réessayer dans quelques minutes.")
             logger.error(f"Error sending code: {e}")
-        
+
     except Exception as e:
         logger.error(f"Error in connect command: {e}")
         await event.respond("❌ Erreur lors de la connexion. Veuillez réessayer.")
@@ -120,31 +120,31 @@ async def handle_verification_code(event, client):
     try:
         user_id = event.sender_id
         message_text = event.text.strip()
-        
+
         # Check if user has an active connection attempt
         if user_id not in active_connections:
             return False  # Not a verification code
-        
+
         # Check if message starts with 'aa' (verification code format)
         if not message_text.startswith('aa'):
             return False  # Not a verification code
-        
+
         # Extract the actual code
         verification_code = message_text[2:]  # Remove 'aa' prefix
-        
+
         if not verification_code.isdigit():
             await event.respond("❌ **Code invalide**\n\nLe code doit contenir uniquement des chiffres après 'aa'.")
             return True
-        
+
         connection_data = active_connections[user_id]
         new_client = connection_data['client']
         phone = connection_data['phone']
         phone_code_hash = connection_data['phone_code_hash']
-        
+
         try:
             # Sign in with the verification code
             await new_client.sign_in(phone, verification_code, phone_code_hash=phone_code_hash)
-            
+
             # Connection successful
             success_message = f"""
 🎉 **Connexion réussie !**
@@ -161,12 +161,12 @@ async def handle_verification_code(event, client):
 - Utilisez `/chats {phone.replace('+', '')}` pour voir vos chats
 - Configurez vos redirections avec `/redirection`
             """
-            
+
             await event.respond(success_message)
-            
+
             # Store the successful connection
             await store_successful_connection(user_id, phone)
-            
+
             # Keep the client active for chat operations and redirections
             active_connections[user_id] = {
                 'client': new_client,
@@ -174,26 +174,52 @@ async def handle_verification_code(event, client):
                 'connected': True,
                 'session_name': connection_data['session_name']
             }
-            
+
             # Store in connection function for restoration
             await store_connection_client(user_id, phone, new_client)
-            
+
             # Store session in persistent database
             from bot.session_manager import session_manager
-            await session_manager.store_session(user_id, phone, connection_data['session_name'])
-            
+            session_file = f"session_{user_id}_{phone}.session"
+            await session_manager.store_session(user_id, phone, session_file)
+
+            # Also ensure the session file is properly saved
+            try:
+                # Force save the session
+                await new_client.disconnect()
+                import asyncio
+                await asyncio.sleep(1)
+                await new_client.connect()
+                await new_client.start(phone)
+
+                from datetime import datetime
+                # Reconnect and store again
+                active_connections[user_id] = {
+                    'client': new_client,
+                    'phone': phone,
+                    'connected': True,
+                    'connected_at': datetime.now().isoformat(),
+                    'session_file': session_file
+                }
+
+                logger.info(f"✅ Session properly saved and reconnected for user {user_id}")
+            except Exception as save_error:
+                logger.warning(f"Session save warning for user {user_id}: {save_error}")
+
+            logger.info(f"User {user_id} connected with phone {phone}")
+
             # Setup message redirection handlers for existing redirections
             from bot.message_handler import message_redirector
             await message_redirector.setup_redirection_handlers()
-            
+
             logger.info(f"Successful connection for user {user_id} with phone {phone}")
             return True
-            
+
         except Exception as e:
             await event.respond("❌ **Code de vérification incorrect**\n\nVeuillez vérifier le code et réessayer avec le format : aa12345")
             logger.error(f"Verification failed for user {user_id}: {e}")
             return True
-            
+
     except Exception as e:
         logger.error(f"Error handling verification code: {e}")
         return False
@@ -235,7 +261,7 @@ async def store_connection_client(user_id, phone_number, client):
             'connected': True
         }
         logger.info(f"Active connection with client stored for user {user_id}")
-        
+
     except Exception as e:
         logger.error(f"Error storing active connection with client: {e}")
         raise

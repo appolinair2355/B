@@ -296,4 +296,3 @@ async def perform_global_reset(event):
     except Exception as e:
         logger.error(f"Error performing global reset: {e}")
         await event.respond("❌ Erreur lors de la réinitialisation globale.")
-  
