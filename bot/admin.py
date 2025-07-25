@@ -14,14 +14,14 @@ async def handle_admin_commands(event, client):
     try:
         user_id = event.sender_id
         admin_id = int(os.getenv("ADMIN_ID", "0"))
-        
+
         # Check if user is admin
         if user_id != admin_id:
             await event.respond("❌ Accès refusé. Commande réservée aux administrateurs.")
             return
-        
+
         message_text = event.text.strip().lower()
-        
+
         if message_text == "/admin":
             await show_admin_help(event, client)
         elif message_text.startswith("/confirm"):
@@ -36,7 +36,7 @@ async def handle_admin_commands(event, client):
             await handle_sessions(event, client)
         else:
             await event.respond("❓ Commande admin non reconnue. Tapez /admin pour voir les commandes disponibles.")
-            
+
     except Exception as e:
         logger.error(f"Error in admin command: {e}")
         await event.respond("❌ Erreur lors de l'exécution de la commande admin.")
@@ -74,15 +74,15 @@ async def handle_confirm_payment(event, client):
         if len(parts) != 2:
             await event.respond("❌ Format : `/confirm USER_ID`\n\nExemple : `/confirm 1190237801`")
             return
-        
+
         target_user_id = parts[1]
-        
+
         # Generate and send license
         license_code = generate_license(target_user_id)
-        
+
         # Store license in database
         await store_license(target_user_id, license_code)
-        
+
         # Send license to user
         license_message = f"""
 🎉 **Paiement confirmé !**
@@ -99,9 +99,9 @@ async def handle_confirm_payment(event, client):
 
 Merci pour votre confiance ! 🚀
         """
-        
+
         await client.send_message(int(target_user_id), license_message)
-        
+
         # Confirm to admin
         admin_confirmation = f"""
 ✅ **Paiement confirmé avec succès**
@@ -112,10 +112,10 @@ Merci pour votre confiance ! 🚀
 
 L'utilisateur peut maintenant utiliser toutes les fonctionnalités premium.
         """
-        
+
         await event.respond(admin_confirmation)
         logger.info(f"Payment confirmed for user {target_user_id} by admin")
-        
+
     except Exception as e:
         logger.error(f"Error confirming payment: {e}")
         await event.respond("❌ Erreur lors de la confirmation du paiement.")
@@ -127,15 +127,15 @@ async def handle_generate_license(event, client):
         if len(parts) != 2:
             await event.respond("❌ Format : `/generate USER_ID`\n\nExemple : `/generate 1190237801`")
             return
-        
+
         target_user_id = parts[1]
-        
+
         # Generate license
         license_code = generate_license(target_user_id)
-        
+
         # Store license in database
         await store_license(target_user_id, license_code)
-        
+
         # Show license to admin
         admin_message = f"""
 🔐 **Licence générée**
@@ -149,10 +149,10 @@ async def handle_generate_license(event, client):
 • La licence est déjà activée en base de données
 • L'utilisateur peut l'utiliser avec /valide
         """
-        
+
         await event.respond(admin_message)
         logger.info(f"Manual license generated for user {target_user_id}")
-        
+
     except Exception as e:
         logger.error(f"Error generating license: {e}")
         await event.respond("❌ Erreur lors de la génération de la licence.")
@@ -161,11 +161,11 @@ async def handle_list_users(event, client):
     """List registered users"""
     try:
         from bot.database import load_data
-        
+
         data = load_data()
         licenses = data.get("licenses", {})
         connections = data.get("connections", {})
-        
+
         user_list = f"""
 👥 **LISTE DES UTILISATEURS**
 
@@ -175,24 +175,24 @@ async def handle_list_users(event, client):
 
 🔐 **Utilisateurs avec licence :**
 """
-        
+
         for user_id, license_data in licenses.items():
             status = "✅ Actif" if license_data.get("active", False) else "❌ Inactif"
             user_list += f"• {user_id} - {status}\n"
-        
+
         if not licenses:
             user_list += "Aucun utilisateur avec licence\n"
-        
+
         user_list += "\n📱 **Utilisateurs connectés :**\n"
         for user_id, user_connections in connections.items():
             phone_count = len(user_connections)
             user_list += f"• {user_id} - {phone_count} numéro(s)\n"
-        
+
         if not connections:
             user_list += "Aucun utilisateur connecté"
-        
+
         await event.respond(user_list)
-        
+
     except Exception as e:
         logger.error(f"Error listing users: {e}")
         await event.respond("❌ Erreur lors de la récupération des utilisateurs.")
@@ -201,15 +201,15 @@ async def handle_stats(event, client):
     """Show bot statistics"""
     try:
         from bot.database import load_data
-        
+
         data = load_data()
-        
+
         total_licenses = len(data.get("licenses", {}))
         active_licenses = sum(1 for license_data in data.get("licenses", {}).values() 
                             if license_data.get("active", False))
         total_connections = len(data.get("connections", {}))
         total_redirections = sum(len(redirections) for redirections in data.get("redirections", {}).values())
-        
+
         stats_message = f"""
 📊 **STATISTIQUES DU BOT**
 
@@ -226,9 +226,9 @@ async def handle_stats(event, client):
 
 🚀 **Statut :** Bot opérationnel
         """
-        
+
         await event.respond(stats_message)
-        
+
     except Exception as e:
         logger.error(f"Error showing stats: {e}")
         await event.respond("❌ Erreur lors de la récupération des statistiques.")
@@ -238,14 +238,14 @@ async def handle_sessions(event, client):
     try:
         from bot.database import load_data
         from bot.connection import active_connections
-        
+
         data = load_data()
         connections = data.get("connections", {})
         redirections = data.get("redirections", {})
-        
+
         # Build sessions message
         sessions_message = "📱 **SESSIONS ACTIVES**\n\n"
-        
+
         # Active connection attempts (temporary sessions)
         if active_connections:
             sessions_message += "🔄 **Connexions en cours :**\n"
@@ -255,7 +255,7 @@ async def handle_sessions(event, client):
             sessions_message += "\n"
         else:
             sessions_message += "🔄 **Connexions en cours :** Aucune\n\n"
-        
+
         # Established connections
         if connections:
             sessions_message += "✅ **Connexions établies :**\n"
@@ -274,10 +274,10 @@ async def handle_sessions(event, client):
                 sessions_message += "\n"
         else:
             sessions_message += "✅ **Connexions établies :** Aucune\n\n"
-        
+
         # Redirections actives
         sessions_message += "🔀 **REDIRECTIONS ACTIVES**\n\n"
-        
+
         if redirections:
             total_redirections = 0
             for user_id, user_redirections in redirections.items():
@@ -289,7 +289,7 @@ async def handle_sessions(event, client):
                             created_at = redir_data.get('created_at', 'Date inconnue')
                             replaced_at = redir_data.get('replaced_at', '')
                             replacement_info = redir_data.get('replacement_info', '')
-                            
+
                             sessions_message += f"  🔀 {name} → {phone}\n"
                             if replaced_at and replacement_info:
                                 sessions_message += f"     🔄 Restauré le: {replaced_at}{replacement_info}\n"
@@ -297,12 +297,12 @@ async def handle_sessions(event, client):
                                 sessions_message += f"     ⏰ Créé le: {created_at[:19]}\n"
                             total_redirections += 1
                     sessions_message += "\n"
-            
+
             if total_redirections == 0:
                 sessions_message += "Aucune redirection active\n"
         else:
             sessions_message += "Aucune redirection configurée\n"
-        
+
         # Summary
         total_active_connections = sum(len(conns) for conns in connections.values())
         total_temp_connections = len(active_connections)
@@ -310,15 +310,15 @@ async def handle_sessions(event, client):
             sum(1 for redir in user_redirections.values() if redir.get('active', True))
             for user_redirections in redirections.values()
         )
-        
+
         sessions_message += f"\n📊 **RÉSUMÉ :**\n"
         sessions_message += f"• Connexions temporaires : {total_temp_connections}\n"
         sessions_message += f"• Connexions établies : {total_active_connections}\n" 
         sessions_message += f"• Redirections actives : {total_active_redirections}\n"
-        
+
         await event.respond(sessions_message)
         logger.info("Sessions information displayed to admin")
-        
+
     except Exception as e:
         logger.error(f"Error showing sessions: {e}")
         await event.respond("❌ Erreur lors de la récupération des sessions.")
