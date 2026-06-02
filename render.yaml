@@ -13,11 +13,7 @@ services:
         sync: false
       - key: ADMIN_ID
         sync: false
-      - key: DATABASE_URL
-        sync: false
+      - key: PORT
+        value: "10000"
     plan: free
     region: oregon
-    branch: main
-    rootDir: .
-    scaling:
-      numInstances: 1

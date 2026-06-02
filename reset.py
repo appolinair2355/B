@@ -3,8 +3,8 @@ import logging
 import os
 import glob
 import json
-from bot.database import load_data, save_data
-from bot.connection import active_connections
+from database import load_data, save_data
+from connection import active_connections
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +150,7 @@ async def perform_reset(event, user_id):
         
         # 5. Reset message handlers
         try:
-            from bot.message_handler import message_redirector
+            from message_handler import message_redirector
             # Clear any handlers for this user
             if hasattr(message_redirector, 'user_handlers'):
                 message_redirector.user_handlers.pop(user_id, None)
@@ -296,4 +296,3 @@ async def perform_global_reset(event):
     except Exception as e:
         logger.error(f"Error performing global reset: {e}")
         await event.respond("❌ Erreur lors de la réinitialisation globale.")
-          
