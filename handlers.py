@@ -249,8 +249,6 @@ async def help_command(event):
 🔹 `/setup_channel` - Configuration automatique de votre canal
 🔹 `/reset` - Réinitialiser toutes les connexions et redirections
 
-**Commandes Admin :**
-
 🔹 `/help` - Afficher cette aide
 
 **Support :**
@@ -531,33 +529,6 @@ async def keepalive_command(event):
         logger.error(f"Error in keepalive command: {e}")
         await event.respond("❌ Erreur lors de la vérification du statut.")
 
-🔮 **Statut du Système de Prédictions**
-
-**État :** {status_text}
-**Total prédictions :** {status['total_predictions']}
-
-**Fonctionnement :**
-• Analyse automatique des messages transférés
-• Détection des cartes entre parenthèses
-• Prédiction si 3 cartes de couleurs différentes
-• Notification automatique à l'admin
-
-**Contrôles :**
-
-**Algorithme :**
-1. Recherche des cartes : ♠♣♥♦ ou SCHD
-2. Vérification de la diversité des couleurs
-3. Génération du numéro prédit (1-9)
-4. Message : "Le joueur recevra 3K"
-        """
-
-        await event.respond(status_message)
-        logger.info(f"Prediction status checked by admin {user_id}")
-
-    except Exception as e:
-        logger.error(f"Error in prediction status command: {e}")
-        await event.respond("❌ Erreur lors de la vérification du statut des prédictions.")
-
 @client.on(events.NewMessage(pattern="/reset"))
 async def reset_command(event):
     """Handle /reset command"""
@@ -590,7 +561,7 @@ async def handle_unknown_command(event):
 
 
     # Then check for unknown commands
-    if event.text and event.text.startswith('/') and not any(event.text.startswith(cmd) for cmd in ['/start', '/connect', '/deposer', '/redirection', '/transformation', '/whitelist', '/blacklist', '/chats', '/help', '/admin', '/confirm', '/generate', '/users', '/stats', '/sessions', '/keepalive', '/stop', '/start_continuous', '/channel_to_bot', '/setup_channel', '/prediction_start', '/prediction_stop', '/prediction_status', '/reset']):
+    if event.text and event.text.startswith('/') and not any(event.text.startswith(cmd) for cmd in ['/start', '/connect', '/deposer', '/redirection', '/transformation', '/whitelist', '/blacklist', '/chats', '/help', '/admin', '/confirm', '/generate', '/users', '/stats', '/sessions', '/keepalive', '/stop', '/start_continuous', '/channel_to_bot', '/setup_channel', '/reset']):
         await event.respond("❓ Commande non reconnue. Tapez /help pour voir les commandes disponibles.")
 
 # Surveillance automatique pour Render
@@ -605,39 +576,44 @@ async def surveillance_response(event):
 
 async def start_bot():
     """Start the bot and handle all initialization"""
+    # Start client with bot token
+    await client.start(bot_token=BOT_TOKEN)
+    logger.info("🚀 Bot TeleFeed démarré avec succès!")
+    print("Bot lancé !")
+
+    # Wait a moment for bot to be fully ready
+    await asyncio.sleep(2)
+
+    # Restore persistent sessions (non-blocking — échec silencieux)
     try:
-        # Start client with bot token
-        await client.start(bot_token=BOT_TOKEN)
-        logger.info("🚀 Bot TeleFeed démarré avec succès!")
-        print("Bot lancé !")
-
-        # Wait a moment for bot to be fully ready
-        await asyncio.sleep(2)
-
-        # Restore persistent sessions first
         from session_manager import session_manager
         logger.info("🔄 Restauration des sessions persistantes...")
         await session_manager.restore_all_sessions()
+    except Exception as e:
+        logger.warning(f"⚠️ Restauration sessions ignorée: {e}")
 
-        # Setup the message redirector for all redirections
+    # Setup message redirector (non-blocking — échec silencieux)
+    try:
         from message_handler import message_redirector
         await message_redirector.setup_redirection_handlers()
         logger.info("🔄 Redirections configurées via message_redirector")
+    except Exception as e:
+        logger.warning(f"⚠️ Configuration redirections ignorée: {e}")
 
-        # Log restoration summary
-        logger.info("🔄 Système de restauration automatique des redirections activé")
+    logger.info("🔄 Système de restauration automatique des redirections activé")
 
-        # Initialize and start keep-alive system
+    # Initialize keep-alive system (non-blocking)
+    try:
         keep_alive = KeepAliveSystem(client, ADMIN_ID)
-        client.keep_alive_system = keep_alive  # Store reference for commands
+        client.keep_alive_system = keep_alive
         asyncio.create_task(keep_alive.start_keep_alive())
         logger.info("🔄 Système de maintien d'activité démarré")
-
-        await client.run_until_disconnected()
-
     except Exception as e:
-        logger.error(f"Error starting bot: {e}")
-        raise
+        logger.warning(f"⚠️ Keep-alive ignoré: {e}")
+
+    # Toujours atteindre cette ligne — c'est ici que le bot écoute les commandes
+    logger.info("✅ Bot en écoute — toutes les commandes sont actives")
+    await client.run_until_disconnected()
 
 def start_bot_sync():
     """Synchronous wrapper to start the bot"""
